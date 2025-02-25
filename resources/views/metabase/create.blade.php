@@ -34,12 +34,9 @@
 
                         <div class="form-group">
                             <label>Kategori</label>
-                            <select class="form-control @error('kategori') is-invalid @enderror"
-                                    name="kategori" required>
-                                <option value="">-- Pilih Kategori --</option>
-                                <option value="Berusaha">Berusaha</option>
-                                <option value="Non Berusaha">Non Berusaha</option>
-                            </select>
+                            <input type="text" name="kategori"
+                                   class="form-control @error('kategori') is-invalid @enderror"
+                                   value="{{ old('kategori', $sektor->kategori) }}" required>
                             @error('kategori')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

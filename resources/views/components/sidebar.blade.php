@@ -53,7 +53,12 @@
                     <i class="fas fa-sync"></i> <span>Import Data</span>
                 </a>
             </li>
-            <!-- Kategori Metabase Dinamis -->
+            <li class="menu-header">API</li>
+            <li class="{{ Request::is('Api/index/') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('Api.index') }}">
+                    <i class="fas fa-sync"></i> <span>Data Database</span>
+                </a>
+            </li>
             @php
                 $sectors = App\Models\Metabase::with('sektor')
                     ->select('id_sektor')

@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('title', 'Data Sektor')
+@section('title', 'Data Database')
 
 @section('content')
 <div class="main-content">
     <section class="section">
         <div class="section-header">
-            <h1>Data Sektor</h1>
+            <h1>Data Database</h1>
         </div>
 
         <div class="section-body">
@@ -23,9 +23,9 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h4>Daftar Sektor</h4>
+                    <h4>Daftar Database</h4>
                     <div class="card-header-action">
-                        <a href="{{ route('sektor.create') }}" class="btn btn-primary">
+                        <a href="{{ route('Api.create') }}" class="btn btn-primary">
                             Tambah Data
                         </a>
                     </div>
@@ -36,21 +36,21 @@
                             <thead>
                                 <tr>
                                     <th>No</th>
-                                    <th>Sektor</th>
-                                    <th>Keterangan</th>
+                                    <th>Tabel</th>
+                                    <th>Link API</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($sektor as $sektor)
+                                @foreach($api as $api)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
-                                    <td>{{ $sektor->sektor }}</td>
-                                    <td>{{ $sektor->keterangan }}</td>
+                                    <td>{{ $api->tabel }}</td>
+                                    <td>{{ $api->link_api }}</td>
                                     <td>
-                                        <a href="{{ route('sektor.edit', $sektor->id_sektor) }}"
+                                        <a href="{{ route('Api.edit', $api->id) }}"
                                            class="btn btn-warning btn-sm">Edit</a>
-                                        <form action="{{ route('sektor.destroy', $sektor->id_sektor) }}"
+                                        <form action="{{ route('Api.destroy', $api->id) }}"
                                               method="POST" class="d-inline">
                                             @csrf
                                             @method('DELETE')

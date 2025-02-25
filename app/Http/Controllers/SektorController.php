@@ -39,4 +39,36 @@ class SektorController extends Controller
         return redirect()->route('sektor.index')
             ->with('success', 'Data berhasil ditambahkan!');
     }
+
+    public function edit(Sektor $sektor)
+    {
+        return view('sektor.edit', compact('sektor'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Sektor $sektor)
+    {
+        $request->validate([
+            'sektor' => 'required',
+            'keterangan' => 'nullable'
+        ]);
+
+        $sektor->update($request->all());
+
+        return redirect()->route('sektor.index')
+            ->with('success', 'Data berhasil diupdate!');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Sektor $sektor)
+    {
+        $sektor->delete();
+
+        return redirect()->route('sektor.index')
+            ->with('success', 'Data berhasil dihapus!');
+    }
 }

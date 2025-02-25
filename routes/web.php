@@ -7,6 +7,7 @@ use App\Http\Controllers\MetabaseController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\NibImportController;
 use App\Http\Controllers\SektorController;
+use App\Http\Controllers\ApiController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -62,4 +63,7 @@ Route::get('/category/{kategori}', [MetabaseController::class, 'guestCategory'])
 Route::get('/import', [NibImportController::class, 'showImportForm'])->name('import.showImportForm');
 Route::post('/import', [NibImportController::class, 'import'])->name('import.import');
 
+
 Route::resource('sektor', SektorController::class);
+
+Route::resource('Api', ApiController::class);
