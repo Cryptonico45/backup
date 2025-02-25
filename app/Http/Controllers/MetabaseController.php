@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Metabase;
+use App\Models\Sektor;
 use Illuminate\Http\Request;
 
 class MetabaseController extends Controller
@@ -12,7 +13,7 @@ class MetabaseController extends Controller
      */
     public function index()
     {
-        $metabase = Metabase::latest()->get();
+        $metabase = Metabase::with('sektor')->latest()->get();
         return view('metabase.index', compact('metabase'));
     }
 
@@ -21,7 +22,8 @@ class MetabaseController extends Controller
      */
     public function create()
     {
-        return view('metabase.create');
+        $sektor = Sektor::all();
+        return view('metabase.create', compact('sektor'));
     }
 
     /**
@@ -30,6 +32,7 @@ class MetabaseController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'id_sektor' => 'required|exists:sektor,id_sektor',
             'kategori' => 'required',
             'link_metabase' => 'required|url',
             'keterangan' => 'nullable'
@@ -95,5 +98,17 @@ class MetabaseController extends Controller
     {
         $metabases = Metabase::where('kategori', $kategori)->get();
         return view('metabase.category', compact('metabases', 'kategori'));
+    }
+
+    public function showBySectorCategory($sector, $category)
+    {
+        $metabases = Metabase::where('id_sektor', $sector)
+                            ->where('kategori', $category)
+                            ->with('sektor')
+                            ->get();
+        
+        $sektorName = Sektor::find($sector)->sektor;
+        
+        return view('metabase.sector_category', compact('metabases', 'sektorName', 'category'));
     }
 }

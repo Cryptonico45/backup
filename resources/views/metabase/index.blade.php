@@ -36,6 +36,7 @@
                             <thead>
                                 <tr>
                                     <th>No</th>
+                                    <th>Sektor</th>
                                     <th>Kategori</th>
                                     <th>Link Metabase</th>
                                     <th>Keterangan</th>
@@ -46,6 +47,7 @@
                                 @foreach($metabase as $metabase)
                                 <tr>
                                     <td>{{ $loop->iteration }}</td>
+                                    <td>{{ $metabase->sektor->sektor }}</td>
                                     <td>{{ $metabase->kategori }}</td>
                                     <td>{{ $metabase->link_metabase }}</td>
                                     <td>{{ $metabase->keterangan }}</td>

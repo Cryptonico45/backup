@@ -18,23 +18,33 @@
                     <form action="{{ route('metabase.store') }}" method="POST">
                         @csrf
                         <div class="form-group">
+                            <label>Sektor</label>
+                            <select class="form-control @error('id_sektor') is-invalid @enderror" name="id_sektor" required>
+                                <option value="">-- Pilih Sektor --</option>
+                                @foreach($sektor as $sektor)
+                                    <option value="{{ $sektor->id_sektor }}">
+                                        {{ $sektor->sektor }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('id_sektor')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
                             <label>Kategori</label>
                             <select class="form-control @error('kategori') is-invalid @enderror"
                                     name="kategori" required>
                                 <option value="">-- Pilih Kategori --</option>
-                                <option value="Perizinan">Perizinan</option>
-                                <option value="Kepegawaian">Kepegawaian</option>
-                                <option value="Kesehatan">Kesehatan</option>
-                                <option value="Kependudukan">Kependudukan</option>
-                                <option value="Perhubungan">Perhubungan</option>
-                                <option value="Keuangan">Keuangan</option>
-                                <option value="Pembangunan">Pembangunan</option>
-                                <option value="SIG">SIG</option>
+                                <option value="Berusaha">Berusaha</option>
+                                <option value="Non Berusaha">Non Berusaha</option>
                             </select>
                             @error('kategori')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+
                         <div class="form-group">
                             <label>Link Metabase</label>
                             <input type="text" name="link_metabase"
@@ -44,6 +54,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+
                         <div class="form-group">
                             <label>Keterangan</label>
                             <textarea name="keterangan"
@@ -53,6 +64,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+
                         <button type="submit" class="btn btn-primary">Simpan</button>
                     </form>
                 </div>

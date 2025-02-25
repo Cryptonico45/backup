@@ -27,10 +27,15 @@
                 <a class="nav-link" href="{{ url('profile/change-password') }}"><i class="fas fa-key"></i> <span>Ganti Password</span></a>
             </li>
             <!-- Menu Metabase -->
-            <li class="menu-header">Metabase</li>
+            <li class="menu-header">Kategori Dashboard</li>
             <li class="{{ Request::is('metabase') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('metabase.index') }}">
                     <i class="fas fa-database"></i> <span>Data Metabase</span>
+                </a>
+            </li>
+            <li class="{{ Request::is('sektor') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('sektor.index') }}">
+                    <i class="fas fa-database"></i> <span>Data Sektor</span>
                 </a>
             </li>
             <!-- Menu Backup -->
@@ -40,21 +45,49 @@
                     <i class="fas fa-sync"></i> <span>Backup Data Sicantik</span>
                 </a>
             </li>
+                </a>
+            </li>
+            <li class="menu-header">Import Data Excel</li>
+            <li class="{{ Request::is('import') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('import.showImportForm') }}">
+                    <i class="fas fa-sync"></i> <span>Import Data</span>
+                </a>
+            </li>
             <!-- Kategori Metabase Dinamis -->
             @php
-                $categories = App\Models\Metabase::select('kategori')
+                $sectors = App\Models\Metabase::with('sektor')
+                    ->select('id_sektor')
                     ->distinct()
-                    ->orderBy('kategori')
-                    ->get();
+                    ->get()
+                    ->map(function($item) {
+                        return [
+                            'sektor' => $item->sektor,
+                            'categories' => App\Models\Metabase::where('id_sektor', $item->id_sektor)
+                                ->select('kategori')
+                                ->distinct()
+                                ->get()
+                        ];
+                    });
             @endphp
 
-            @if($categories->count() > 0)
-                <li class="menu-header">Kategori Dashboard</li>
-                @foreach($categories as $category)
-                    <li class="{{ Request::is('metabase/kategori/'.$category->kategori) ? 'active' : '' }}">
-                        <a class="nav-link" href="{{ route('metabase.by.category', $category->kategori) }}">
-                            <i class="fas fa-chart-line"></i> <span>{{ $category->kategori }}</span>
+            @if($sectors->count() > 0)
+                <li class="menu-header">Dashboard Sektor</li>
+                @foreach($sectors as $sectorData)
+                    <li class="dropdown {{ Request::is('metabase/sektor/'.$sectorData['sektor']->id_sektor.'/*') ? 'active' : '' }}">
+                        <a href="#" class="nav-link has-dropdown">
+                            <i class="fas fa-building"></i>
+                            <span>{{ $sectorData['sektor']->sektor }}</span>
                         </a>
+                        <ul class="dropdown-menu">
+                            @foreach($sectorData['categories'] as $category)
+                                <li class="{{ Request::is('metabase/sektor/'.$sectorData['sektor']->id_sektor.'/'.$category->kategori) ? 'active' : '' }}">
+                                    <a class="nav-link" href="{{ route('metabase.by.sector.category', ['sector' => $sectorData['sektor']->id_sektor, 'category' => $category->kategori]) }}">
+                                        <i class="fas fa-chart-line"></i>
+                                        <span>{{ $category->kategori }}</span>
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
                     </li>
                 @endforeach
             @endif

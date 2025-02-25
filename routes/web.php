@@ -5,6 +5,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ExampleController;
 use App\Http\Controllers\MetabaseController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\NibImportController;
+use App\Http\Controllers\SektorController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -42,6 +44,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/metabase/kategori/{kategori}', [MetabaseController::class, 'showByCategory'])
         ->name('metabase.by.category');
+    Route::get('/metabase/sektor/{sector}/{category}', [MetabaseController::class, 'showBySectorCategory'])
+        ->name('metabase.by.sector.category');
 });
 
 Route::get('/category/{kategori}', [MetabaseController::class, 'guestCategory'])
@@ -54,3 +58,8 @@ Route::get('/category/{kategori}', [MetabaseController::class, 'guestCategory'])
     Route::post('/index/backup', [BackupController::class, 'backup'])->name('index.backup');
 
     Route::get('/index/index', [BackupController::class, 'index'])->name('index.index');
+
+Route::get('/import', [NibImportController::class, 'showImportForm'])->name('import.showImportForm');
+Route::post('/import', [NibImportController::class, 'import'])->name('import.import');
+
+Route::resource('sektor', SektorController::class);

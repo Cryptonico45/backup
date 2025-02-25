@@ -13,10 +13,16 @@ return new class extends Migration
     {
         Schema::create('metabase', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('id_sektor');
             $table->string('kategori');
             $table->text('link_metabase');
             $table->text('keterangan')->nullable();
             $table->timestamps();
+
+            $table->foreign('id_sektor')
+                  ->references('id_sektor')
+                  ->on('sektor')
+                  ->onDelete('cascade');
         });
     }
 
