@@ -13,41 +13,6 @@ use Illuminate\Support\Facades\Log;
 
 class BackupController extends Controller
 {
-    protected $sicantikUrl = 'https://sicantik.go.id/api/TemplateData/keluaran/41710.json';
-
-    private function checkAndCreateColumns($data)
-    {
-        $table = 'permohonan_izin_penetapan';
-        $existingColumns = Schema::getColumnListing($table);
-
-        // Jupuk sample data gawe ngecek struktur
-        $sampleData = $data[0] ?? null;
-        if (!$sampleData) return;
-
-        Schema::table($table, function (Blueprint $table) use ($sampleData, $existingColumns) {
-            foreach ($sampleData as $key => $value) {
-                // Skip nek kolom wes ono
-                if (in_array($key, $existingColumns)) continue;
-
-                // Tentukan tipe data berdasarkan nilai
-                if (is_numeric($value) && strpos($value, '.') !== false) {
-                    $table->decimal($key, 15, 2)->nullable();
-                } elseif (is_numeric($value)) {
-                    $table->bigInteger($key)->nullable();
-                } elseif (is_bool($value)) {
-                    $table->boolean($key)->nullable();
-                } elseif (strtotime($value) !== false) {
-                    $table->dateTime($key)->nullable();
-                } else {
-                    // Default dadi VARCHAR(255)
-                    $table->string($key)->nullable();
-                }
-
-                Log::info("Kolom anyar ditambahke: $key");
-            }
-        });
-    }
-
     public function index(Request $request)
     {
         // Query gawe njupuk kabeh tabel
@@ -66,53 +31,71 @@ class BackupController extends Controller
         $selected_table = $request->query('table');
         $data = [];
         $columns = [];
+        $perPage = $request->query('perPage', 10); // Default 10 item per page
 
         // Nek ono table sing dipilih, langsung tampilno data ne
         if ($selected_table) {
             try {
-                $data = DB::table($selected_table)->get();
-                if (count($data) > 0) {
-                    $columns = array_keys((array)$data[0]);
+                // Ganti get() dengan paginate() gawe pagination
+                $data = DB::table($selected_table)->paginate($perPage);
+
+                if ($data->count() > 0) {
+                    // Jupuk columns seko item pertama
+                    $firstItem = (array)$data->items()[0];
+                    $columns = array_keys($firstItem);
                 }
             } catch (\Exception $e) {
                 return redirect()->back()->with('error', 'Gagal njupuk data: ' . $e->getMessage());
             }
         }
 
-        return view('index', compact('database_tables', 'selected_table', 'data', 'columns'));
+        // Ambil daftar API yang tersedia
+        $apis = DB::table('api')->get();
 
+        return view('index', compact('database_tables', 'selected_table', 'data', 'columns', 'apis', 'perPage'));
     }
 
     public function backup(Request $request)
     {
         try {
-            // Format tanggal dadi Y-m-d (contoh: 2024-03-20)
-            $startDate = Carbon::parse($request->start_date)->format('Y-m-d');
-            $endDate = Carbon::parse($request->end_date)->format('Y-m-d');
+            // Validasi input
+            $request->validate([
+                'table' => 'required',
+                'api_url' => 'required'
+            ]);
+
+            // Ambil URL API dari form
+            $apiUrl = $request->api_url;
 
             // Catat neng log gawe debugging
-            Log::info("Start Date: " . $startDate);
-            Log::info("End Date: " . $endDate);
-
-            // Njupuk data seko API Sicantik
-            // withoutVerifying() -> skip SSL verification
-            // Parameter key1 lan key2 iku parameter tanggal gawe filter data
-            $response = Http::withoutVerifying()
-                ->get($this->sicantikUrl . "?key1='" . $startDate . "'&key2='" . $endDate . "'");
+            Log::info("Tabel: " . $request->table);
+            Log::info("API URL: " . $apiUrl);
+            
+            // Njupuk data seko API
+            $response = Http::withoutVerifying()->get($apiUrl);
 
             // Catat response API neng log
             Log::info("API Response: " . $response->body());
 
             // Cek nek API-ne sukses opo ora
             if (!$response->successful()) {
-                return back()->with('error', 'Waduh, gagal njupuk data seko API Sicantik! Status: ' . $response->status());
+                Log::error("API Error: " . $response->status() . " - " . $response->body());
+                return back()->with('error', 'Waduh, gagal njupuk data seko API! Status: ' . $response->status());
             }
 
-            // Jupuk data seko response JSON-e, nek ora ono dikei array kosong
-            $data = $response->json()['data']['data'] ?? [];
+            $responseData = $response->json();
+
+            // Validasi struktur response
+            if (!isset($responseData['data']) || !isset($responseData['data']['data'])) {
+                Log::error("Invalid API Response Structure: " . json_encode($responseData));
+                return back()->with('error', 'Format data seko API ora valid');
+            }
+
+            // Jupuk data seko response JSON-e
+            $data = $responseData['data']['data'];
 
             // Cek nek datane kosong
-            if (empty($data)) {
+            if (empty($data) || !is_array($data)) {
                 return back()->with('error', 'Ora ono data sing ditemokke neng periode iki');
             }
 
@@ -122,32 +105,46 @@ class BackupController extends Controller
             $created = 0;    // Jumlah data anyar
 
             // Mulai transaction database
-            // Tujuane: nek ono error, kabeh perubahan dibatalke
             DB::beginTransaction();
             try {
                 foreach ($data as $item) {
+                    // Validasi item data
+                    if (!is_array($item) || !isset($item['no_permohonan'])) {
+                        Log::warning("Invalid item structure: " . json_encode($item));
+                        continue;
+                    }
+
                     // Cek nek data wes ono opo durung berdasarkan no_permohonan
                     $existingData = Backup::where('no_permohonan', $item['no_permohonan'])->first();
 
                     // Siapke data sing arep disimpen
-                    // except() -> ora masukke field id, created_at, lan updated_at
                     $dataToSave = collect($item)
                         ->except(['created_at', 'updated_at'])
                         ->toArray();
 
-                    // Nek datane wes ono, update
-                    if ($existingData) {
-                        $existingData->update($dataToSave);
-                        $updated++;
+                    try {
+                        // Nek datane wes ono, update
+                        if ($existingData) {
+                            $existingData->update($dataToSave);
+                            $updated++;
+                        }
+                        // Nek durung ono, gawe data anyar
+                        else {
+                            $dataToSave['created_at'] = Carbon::now();
+                            $dataToSave['updated_at'] = Carbon::now();
+                            Backup::create($dataToSave);
+                            $created++;
+                        }
+                        $count++;
+                    } catch (\Exception $e) {
+                        Log::error("Error processing item: " . json_encode($item) . " - " . $e->getMessage());
+                        continue;
                     }
-                    // Nek durung ono, gawe data anyar
-                    else {
-                        $dataToSave['created_at'] = Carbon::now();
-                        $dataToSave['updated_at'] = Carbon::now();
-                        Backup::create($dataToSave);
-                        $created++;
-                    }
-                    $count++;
+                }
+
+                if ($count === 0) {
+                    DB::rollback();
+                    return back()->with('error', 'Ora ono data sing iso diproses');
                 }
 
                 // Nek kabeh sukses, commit perubahan neng database
@@ -157,12 +154,13 @@ class BackupController extends Controller
             } catch (\Exception $e) {
                 // Nek ono error, batalke kabeh perubahan
                 DB::rollback();
+                Log::error("Transaction Error: " . $e->getMessage());
                 throw $e;
             }
 
         } catch (\Exception $e) {
+            Log::error("Backup Error: " . $e->getMessage());
             return back()->with('error', 'Waduh enek error: ' . $e->getMessage());
         }
     }
 }
-

@@ -38,6 +38,11 @@
                     <i class="fas fa-database"></i> <span>Data Sektor</span>
                 </a>
             </li>
+            <li class="{{ Request::is('Api/index') ? 'active' : '' }}">
+                <a class="nav-link" href="{{ route('Api.index') }}">
+                    <i class="fas fa-database"></i> <span>Data Api</span>
+                </a>
+            </li>
             <!-- Menu Backup -->
             <li class="menu-header">Data Management</li>
             <li class="{{ Request::is('index') ? 'active' : '' }}">
@@ -51,12 +56,6 @@
             <li class="{{ Request::is('import') ? 'active' : '' }}">
                 <a class="nav-link" href="{{ route('import.showImportForm') }}">
                     <i class="fas fa-sync"></i> <span>Import Data</span>
-                </a>
-            </li>
-            <li class="menu-header">API</li>
-            <li class="{{ Request::is('Api/index/') ? 'active' : '' }}">
-                <a class="nav-link" href="{{ route('Api.index') }}">
-                    <i class="fas fa-sync"></i> <span>Data Database</span>
                 </a>
             </li>
             @php

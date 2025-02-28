@@ -102,8 +102,9 @@ class ApiController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Api $api)
+    public function destroy($id)
     {
+        $api = Api::findOrFail($id);
         $api->delete();
 
         return redirect()->route('Api.index')
