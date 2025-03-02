@@ -59,17 +59,21 @@
                 </a>
             </li>
             @php
-                $sectors = App\Models\Metabase::with('sektor')
-                    ->select('id_sektor')
+                $sectors = App\Models\Metabase::with(['sektor'])
+                    ->select('id_sektor', 'kategori', 'link_metabase')
                     ->distinct()
                     ->get()
-                    ->map(function($item) {
+                    ->groupBy('id_sektor')
+                    ->map(function($items) {
+                        $firstItem = $items->first();
                         return [
-                            'sektor' => $item->sektor,
-                            'categories' => App\Models\Metabase::where('id_sektor', $item->id_sektor)
-                                ->select('kategori')
-                                ->distinct()
-                                ->get()
+                            'sektor' => $firstItem->sektor,
+                            'categories' => $items->unique('kategori')->map(function($item) {
+                                return [
+                                    'kategori' => $item->kategori,
+                                    'url_dashboard' => $item->link_metabase
+                                ];
+                            })
                         ];
                     });
             @endphp
@@ -79,15 +83,15 @@
                 @foreach($sectors as $sectorData)
                     <li class="dropdown {{ Request::is('metabase/sektor/'.$sectorData['sektor']->id_sektor.'/*') ? 'active' : '' }}">
                         <a href="#" class="nav-link has-dropdown">
-                            <i class="fas fa-building"></i>
+                            <i class="fas fa-chart-pie"></i>
                             <span>{{ $sectorData['sektor']->sektor }}</span>
                         </a>
                         <ul class="dropdown-menu">
                             @foreach($sectorData['categories'] as $category)
-                                <li class="{{ Request::is('metabase/sektor/'.$sectorData['sektor']->id_sektor.'/'.$category->kategori) ? 'active' : '' }}">
-                                    <a class="nav-link" href="{{ route('metabase.by.sector.category', ['sector' => $sectorData['sektor']->id_sektor, 'category' => $category->kategori]) }}">
+                                <li>
+                                    <a class="nav-link" href="{{ $category['url_dashboard'] }}" target="_blank">
                                         <i class="fas fa-chart-line"></i>
-                                        <span>{{ $category->kategori }}</span>
+                                        <span>{{ $category['kategori'] }}</span>
                                     </a>
                                 </li>
                             @endforeach
